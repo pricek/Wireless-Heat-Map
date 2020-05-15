@@ -21,8 +21,11 @@ You will then need to ensure that the correct dependencies are installed. Do thi
 Then navigate to the newly cloned repo and in the same directory as manage.py, use the following commands
 
 ```python manage.py buildDB```
+
 ```python manage.py buildDB --render```
+
 ```python manage.py buildDB --baseline```
+
 ```python manage.py runserver 0:<Port>```
 
 You should then be able to view the hosted site in your browser at
