@@ -1,0 +1,5 @@
+GetLocationsClientID = '<Your GetLocations Client ID>'
+GetLocationsClientSecret = '<Your GetLocations Client Secret>'
+AirwaveUsername = '<Your airwave username>'
+AirwavePassword = '<Your airwave password>'
+GoogleMapsAPIKey = '<Your Google Maps API Key>'
