@@ -9,21 +9,20 @@ import json
 import colorsys
 import datetime
 
+#Helper object used to work with building information
 class Building_Helper:
     RH = Regex_Helper()
     abbrRE = RH.abbrRE
     buildRE = RH.buildRE
-    #buildRE = re.compile('.*-b([0-9]{4})(?:-.*|$)')
-    #buildRE = re.compile('\(.*-b([0-9]{4})[-\)].*')
     floorRE = RH.floorRE
     roomRE  = RH.roomRE
     count = 0
 
     def reset_baseline_clients(self):
-        b = Building.objects.all()
-        f = Floor.objects.all()
-        r = Room.objects.all()
-        for temp in [b,f,r]:
+        buildings = Building.objects.all()
+        floors = Floor.objects.all()
+        rooms = Room.objects.all()
+        for temp in [buildings,floors,rooms]:
             for obj in temp:
                 obj.baseline_clients = 0
                 obj.save()
@@ -34,8 +33,8 @@ class Building_Helper:
         f.close
 
         temp = xmltodict.parse(myxml)
-        tl = temp['amp:amp_folder_list']['folder']
-        locs = {l['@id'] : l for l in tl}
+        temp_locs = temp['amp:amp_folder_list']['folder']
+        locs = {l['@id'] : l for l in temp_locs}
         return locs
 
     def add_building(self, number, name="", bc=0):
@@ -64,7 +63,7 @@ class Building_Helper:
             floor, building= self.add_floor(fn, bn)
         elif bn is not None:
             floor = None
-            building = add_building(bn)
+            building = self.add_building(bn)
         try:
             newRoom = Room.objects.get(building=building, floor=floor, number=number)
             newRoom.baseline_clients += bc
@@ -85,16 +84,15 @@ class Building_Helper:
         test = self.abbrRE.search(name)
         if test:
             abbr = test[1]
-            tb = self.buildRE.search(abbr)
-            if tb:
-                bdict = tb.groupdict()
+            temp_building = self.buildRE.search(abbr)
+            if temp_building:
+                bdict = temp_building.groupdict()
                 abbr = bdict['abbr']
                 build = bdict['building']
                 floor = bdict['floor']
                 room = bdict['room']
                 if build is None:
                     print(f'Name: {name}')
-                    #print(tb.groupdict())
                     self.count += 1
                     return None
         else:
@@ -116,14 +114,8 @@ class Building_Helper:
             test = self.abbrRE.search(name)
             abbr = test[1] if test else name
             return abbr
-        #sdir = os.path.dirname(__file__)
-        #path = "kade.xml"
-        #path = "locs.json"
-        #afpath = os.path.join(sdir, path)
-        #f = open(afpath, "r")
         tempD = json.loads(getLocations.getLocs())
-        #out = {temp_get_abbr(tempD[ids]) : tempD[ids] for ids in tempD}
-        return tempD#out
+        return tempD
     
     def load_build_render(self, ri, loc):
         lri = ri.get(loc.number)
@@ -131,12 +123,12 @@ class Building_Helper:
             loc.render = json.dumps(lri)
             loc.has_render = True
 
+#Objects used to read information from the InfluxDB database
 class Database_Reader:
     def read_buildings(self, q_date=datetime.date.today()):
         renders = Building.objects.filter(has_render=True)
         loads = []
         client = InfluxDBClient('localhost', 8086, 'root', 'root', 'airwave_data')
-        #This query will change when we get live data working
         print(q_date, datetime.date.today())
         if q_date==datetime.date.today().isoformat():
             print("if")
@@ -147,7 +139,6 @@ class Database_Reader:
             q_from = 'one_day.downsampled'
             q_where = 'time >= ' + str(q_date) + ' and time < ' + str(q_date) + ' + 24h'
         result = client.query('select sum(clients) as clients, sum(bandwidth_in) as band_in, sum(bandwidth_out) as band_out from ' + q_from + ' where ' + q_where + ' group by building')
-        #result = client.query('select sum(lc) as clients, sum(lbi) as band_in, sum(lbo) as band_out from (select building, last(clients) as lc, last(bandwidth_in) as lbi, last(bandwidth_out) as lbo from ap_usage) group by building')
         k = [key[1] for key in result.keys()]
         r = [res for res in result.get_points()]
         out = zip(k,r)
@@ -168,23 +159,12 @@ class Database_Reader:
             except:
                 percent_clients = 1
             if percent_clients >= 1: percent_clients=1
-            #Color is generated here######################################
-            #if percent_clients < 0.2:
-            #    color = "#00FFFF"
-            #elif percent_clients < 0.4:
-            #    color = "#0000FF"
-            #elif percent_clients < 0.6:
-            #    color = "#FF00FF"
-            #elif percent_clients < 0.8:
-            #    color = "#FFFF00"
-            #else:
-            #    color = "#FF0000"
-
+            
             # Mapping of the color to a hsl cylinder
             hue = (230-(230 * percent_clients))/ 360
-            l = 0.5
-            s = 0.8
-            rgb = colorsys.hls_to_rgb(hue, l, s)
+            lightness = 0.5
+            saturation = 0.8
+            rgb = colorsys.hls_to_rgb(hue, lightness, saturation)
             color = '#%02x%02x%02x' % (round(rgb[0]*255), round(rgb[1]*255), round(rgb[2]*255))
 
             r['color'] = color

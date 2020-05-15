@@ -8,6 +8,7 @@ import data.strings as creds
 
 RH = Regex_Helper
 
+#Collects data from airwave API and returns a json object representation of the retrived data
 def pull_data():
     data = {}
     print("Start time:" + str(time.time()))
@@ -30,6 +31,7 @@ def pull_data():
         data.update({d['@id'] : d for d in temp})
     return data
 
+#Inserts ap data into the influx db database
 def insert_data():
     data = pull_data()
     #in_time = int(time.localtime())
