@@ -144,7 +144,7 @@ class Database_Reader:
             q_where = 'time > now() - 15m'
         else:
             print("else")
-            q_from = 'downsampled_ap_usage'
+            q_from = 'one_day.downsampled'
             q_where = 'time >= ' + str(q_date) + ' and time < ' + str(q_date) + ' + 24h'
         result = client.query('select sum(clients) as clients, sum(bandwidth_in) as band_in, sum(bandwidth_out) as band_out from ' + q_from + ' where ' + q_where + ' group by building')
         #result = client.query('select sum(lc) as clients, sum(lbi) as band_in, sum(lbo) as band_out from (select building, last(clients) as lc, last(bandwidth_in) as lbi, last(bandwidth_out) as lbo from ap_usage) group by building')

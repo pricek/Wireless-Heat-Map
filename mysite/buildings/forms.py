@@ -8,4 +8,4 @@ class DateInput(forms.DateInput):
     input_type = 'date'
 
 class DateForm(forms.Form):
-    select_date = forms.DateField(label='Date to view', widget=DateInput(attrs={'max' : datetime.date.today()}), initial=datetime.date.today)
+    select_date = forms.DateField(label='Date to view', widget=DateInput(), initial=datetime.date.today)
