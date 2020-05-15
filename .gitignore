@@ -1,3 +1,4 @@
+db.sqlite3
 strings.py
 api_access.txt
 *.log
