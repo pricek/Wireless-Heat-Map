@@ -18,7 +18,11 @@ You will then need to ensure that the correct dependencies are installed. Do thi
 
 ```pip install -r dependencies.txt```
 
+You will need to modify strings_example.py to include the necessary credentials and rename it to strings.py
+
 Then navigate to the newly cloned repo and in the same directory as manage.py, use the following commands
+
+```python manage.py migrate```
 
 ```python manage.py buildDB```
 
