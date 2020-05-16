@@ -18,6 +18,18 @@ You will then need to ensure that the correct dependencies are installed. Do thi
 
 ```pip install -r dependencies.txt```
 
+You will need to install and configure InfluxDB version 1.7.10 on the machine that you are using. After installing run the InfluxDB shell with ```influx``` and setup the data storage with the following commands.
+
+```CREATE DATABASE airwave_data```
+
+```USE airwave_data```
+
+```CREATE RETENTION POLICY two_days ON airwave_data DURATION 24h DEFAULT REPLICATION 1```
+
+```CREATE RETENTION POLICY one_year ON airwave_data DURATION 8736h REPLICATION 1```
+
+```CREATE CONTINUOUS QUERY cq_24h ON airwave_data RESAMPLE EVERY 1d for 1d BEGIN SELECT mean(clients) AS clients, mean(bandwidth_in) AS bandwidth_in, mean(bandwidth_out) AS bandwidth_out INTO airwave_data.one_year.downsampled FROM airwave_data.two_days.ap_usage GROUP BY time(1d), * END```
+
 You will need to modify strings_example.py to include the necessary credentials and rename it to strings.py
 
 Then navigate to the newly cloned repo and in the same directory as manage.py, use the following commands
