@@ -22,6 +22,8 @@ You will need to modify strings_example.py to include the necessary credentials 
 
 Then navigate to the newly cloned repo and in the same directory as manage.py, use the following commands
 
+```python manage.py createsuperuser```
+
 ```python manage.py migrate```
 
 ```python manage.py buildDB```
@@ -35,3 +37,7 @@ Then navigate to the newly cloned repo and in the same directory as manage.py, u
 You should then be able to view the hosted site in your browser at
 
 ```<IP_Address>:<Port>/buildings```
+
+And perform admin actions at
+
+```<IP_Address>:<Port>/admin```
