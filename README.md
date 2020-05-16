@@ -22,9 +22,9 @@ You will need to modify strings_example.py to include the necessary credentials 
 
 Then navigate to the newly cloned repo and in the same directory as manage.py, use the following commands
 
-```python manage.py createsuperuser```
-
 ```python manage.py migrate```
+
+```python manage.py createsuperuser```
 
 ```python manage.py buildDB```
 
