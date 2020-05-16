@@ -18,6 +18,7 @@ class Building_Helper:
     roomRE  = RH.roomRE
     count = 0
 
+    #Sets the baseline client value for all locations
     def reset_baseline_clients(self):
         buildings = Building.objects.all()
         floors = Floor.objects.all()
@@ -26,7 +27,8 @@ class Building_Helper:
             for obj in temp:
                 obj.baseline_clients = 0
                 obj.save()
-
+    
+    #Reads data from a data dump from Airwave
     def read_data(self, data_path):
         f = open(data_path, "r")
         myxml = f.read()
@@ -37,6 +39,8 @@ class Building_Helper:
         locs = {l['@id'] : l for l in temp_locs}
         return locs
 
+    #Adds a building to the database with a given building number, name, and baseline clients
+    #Updates the name of a building if a building with the given number exists
     def add_building(self, number, name="", bc=0):
         try:
             newBuilding = Building.objects.get(number=number)
@@ -48,6 +52,7 @@ class Building_Helper:
         newBuilding.save()
         return newBuilding
 
+    #Adds a floor to the database with a given floor number, building, and baseline clients
     def add_floor(self, number, bn, bc=0):
         building = self.add_building(bn)
         try:
@@ -58,6 +63,7 @@ class Building_Helper:
         newFloor.save()
         return newFloor, building
 
+    #Adds a room to the database with a given room number, floor, building, and baseline clients
     def add_room(self, number, fn, bn, bc=0):
         if fn is not None:
             floor, building= self.add_floor(fn, bn)
@@ -72,12 +78,14 @@ class Building_Helper:
         newRoom.save()
         return newRoom, floor, building
 
+    #Gets the parent of the given location from the provided locations
     def get_parent(self, loc, locs):
         if 'parent_id' in loc:
             pLoc = locs[loc['parent_id']]
         else:
             return None
         
+    #Adds a location to the database
     def add_location(self, loc, locs):
         name = loc['name']
         aps = int(loc['up']) + int(loc['down'])
@@ -109,6 +117,7 @@ class Building_Helper:
             location = self.add_building(build, name, baseline_clients)
         return location
     
+    #Gets the render information for all OSU locations
     def get_render_info(self):
         def temp_get_abbr(name):
             test = self.abbrRE.search(name)
@@ -117,6 +126,7 @@ class Building_Helper:
         tempD = json.loads(getLocations.getLocs())
         return tempD
     
+    #Gets the render information for the specific location from the provided list of render information
     def load_build_render(self, ri, loc):
         lri = ri.get(loc.number)
         if lri and lri['geometry']['type'] != None:
@@ -125,11 +135,13 @@ class Building_Helper:
 
 #Objects used to read information from the InfluxDB database
 class Database_Reader:
+    #Reads the building information from the InfluxDB database
     def read_buildings(self, q_date=datetime.date.today()):
         renders = Building.objects.filter(has_render=True)
         loads = []
         client = InfluxDBClient('localhost', 8086, 'root', 'root', 'airwave_data')
         print(q_date, datetime.date.today())
+        #Determines whether request is for current data or archived data.
         if q_date==datetime.date.today().isoformat():
             print("if")
             q_from = 'ap_usage'
@@ -138,6 +150,7 @@ class Database_Reader:
             print("else")
             q_from = 'one_year.downsampled'
             q_where = 'time >= ' + str(q_date) + ' and time < ' + str(q_date) + ' + 24h'
+        #Queries the InfluxDB database
         result = client.query('select sum(clients) as clients, sum(bandwidth_in) as band_in, sum(bandwidth_out) as band_out from ' + q_from + ' where ' + q_where + ' group by building')
         k = [key[1] for key in result.keys()]
         r = [res for res in result.get_points()]
@@ -147,6 +160,7 @@ class Database_Reader:
             x = o[0]
             x.update(o[1])
             temp.append(x)
+        #Loads the stored render information and maps the data to google maps objects
         for res in temp:
             build = res['building']
             try:
