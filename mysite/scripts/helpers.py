@@ -147,10 +147,12 @@ class Database_Reader:
             q_from = 'ap_usage'
             q_where = 'time > now() - 15m'
         else:
-            print("else")
+            tmp_date = int(datetime.datetime.fromisoformat(q_date).timestamp() * 1000000000)
+            print("else", tmp_date)
             q_from = 'one_year.downsampled'
-            q_where = 'time >= ' + str(q_date) + ' and time < ' + str(q_date) + ' + 24h'
+            q_where = 'time >= ' + str(tmp_date) + ' and time < ' + str(tmp_date) + ' + 24h'
         #Queries the InfluxDB database
+        print(q_where)
         result = client.query('select sum(clients) as clients, sum(bandwidth_in) as band_in, sum(bandwidth_out) as band_out from ' + q_from + ' where ' + q_where + ' group by building')
         k = [key[1] for key in result.keys()]
         r = [res for res in result.get_points()]
